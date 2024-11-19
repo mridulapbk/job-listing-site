@@ -1,8 +1,22 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
-
+const cors = require('cors'); // Import cors
+console.log("Starting server setup...");  // Log at the beginning of the file
 const app = express();
-app.use(express.json()); // Middleware to parse JSON request bodies
+app.use(cors()); // Enable CORS
+app.use(express.json()); 
+
+// Add a test route to verify the server is working
+app.get('/api/test', (req, res) => {
+  res.send("Server is running!");
+});
+
+// Start the server and listen on port 5000
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 
 // MySQL connection config
 const dbConfig = {
@@ -43,7 +57,15 @@ app.post('/api/job-application', async (req, res) => {
   console.log("POST /api/job-application called");
   console.log("Request Body:", req.body); // Log the request body
 
-  const { firstName, lastName, email, phone, coverLetter, yearsOfExperience, resumeUrl } = req.body;
+  const {
+    name = null,
+    email = null,
+    phone = null,
+    coverLetter = null,
+    experience = null,
+    resume = null,
+    jobTitle = null
+  } = req.body;
 
   try {
     // Connect to MySQL database
@@ -51,8 +73,8 @@ app.post('/api/job-application', async (req, res) => {
 
     // Insert a new job application into the database
     const [result] = await connection.execute(
-      'INSERT INTO job_applications (firstName, lastName, email, phone, coverLetter, yearsOfExperience, resumeUrl) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [firstName, lastName, email, phone, coverLetter, yearsOfExperience, resumeUrl]
+      'INSERT INTO job_applications (name, email, phone, coverLetter, experience, resume, jobTitle) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, email, phone, coverLetter, experience, resume, jobTitle]
     );
     await connection.end();
 
@@ -62,10 +84,4 @@ app.post('/api/job-application', async (req, res) => {
     console.error("Error inserting job application:", error); // Log any errors that occur
     res.status(500).json({ error: error.message });
   }
-});
-
-// Start the server and listen on port 5000
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
 });
